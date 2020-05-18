@@ -1,0 +1,20 @@
+{
+  "name": "interperters",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon main.js",
+    "generate_parser": "node tools/generateAst.js src/parser/index.js",
+    "test": "jest --watchAll"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^13.11.1",
+    "chalk": "^4.0.0"
+  },
+  "devDependencies": {
+    "jest": "^26.0.1"
+  }
+}

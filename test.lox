@@ -1,0 +1,11 @@
+fun hello(){
+  var a = 1;
+  fun test() {
+    print a;
+  }
+  return test;
+}
+
+var a=2;
+var c=hello();
+c();
