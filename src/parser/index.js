@@ -20,6 +20,7 @@ class Parser {
 
   declaration() {
     try {
+      if (this.match(TOKEN_ENUM.CLASS)) return this.classDeclaration();
       if (this.match(TOKEN_ENUM.FUN)) return this.funDeclaration();
       if (this.match(TOKEN_ENUM.VAR)) return this.varDeclaration();
       return this.statement();
@@ -28,6 +29,26 @@ class Parser {
       this.synchronize();
       return null;
     }
+  }
+
+  classDeclaration() {
+    const name = this.consume(TOKEN_ENUM.IDENTIFIER, `Expect class name.`);
+
+    let superclass = null;
+    if (this.match(TOKEN_ENUM.LESS)) {
+      this.consume(TOKEN_ENUM.IDENTIFIER, "Expect superclass name.");
+      superclass = new Expr.Variable(this.previous());
+    }
+
+    this.consume(TOKEN_ENUM.LEFT_BRACE, `Expect '{' before class body.`);
+
+    const methods = [];
+    while (!this.check(TOKEN_ENUM.RIGHT_BRACE) && !this.isAtEnd()) {
+      methods.push(this.funDeclaration());
+    }
+
+    this.consume(TOKEN_ENUM.RIGHT_BRACE, `Expect '}' after class body.`);
+    return new Stmt.Class(name, methods, superclass);
   }
 
   funDeclaration() {
@@ -165,8 +186,9 @@ class Parser {
       const value = this.assignment();
 
       if (expr instanceof Expr.Variable) {
-        const name = expr.name;
-        return new Expr.Assign(name, value);
+        return new Expr.Assign(expr.name, value);
+      } else if (expr instanceof Expr.Get) {
+        return new Expr.SetExpr(expr.object, expr.name, value);
       } else {
         this.reportError("Invalid assignment target.");
       }
@@ -261,8 +283,18 @@ class Parser {
 
   callExpression() {
     let expr = this.primary();
-    while (this.match(TOKEN_ENUM.LEFT_PAREN)) {
-      expr = this.finishCall(expr);
+    while (true) {
+      if (this.match(TOKEN_ENUM.LEFT_PAREN)) {
+        expr = this.finishCall(expr);
+      } else if (this.match(TOKEN_ENUM.DOT)) {
+        const name = this.consume(
+          TOKEN_ENUM.IDENTIFIER,
+          `Expect property name after '.'.`
+        );
+        expr = new Expr.Get(expr, name);
+      } else {
+        break;
+      }
     }
 
     return expr;
@@ -289,6 +321,16 @@ class Parser {
   }
 
   primary() {
+    if (this.match(TOKEN_ENUM.SUPER)) {
+      const keyword = this.previous();
+      this.consume(TOKEN_ENUM.DOT, `Expect '.' after super.`);
+      const method = this.consume(
+        TOKEN_ENUM.IDENTIFIER,
+        "Expect superclass method name."
+      );
+      return new Expr.Super(keyword, method);
+    }
+    if (this.match(TOKEN_ENUM.THIS)) return new Expr.This(this.previous());
     if (this.match(TOKEN_ENUM.FALSE)) return new Expr.Literal(false);
     if (this.match(TOKEN_ENUM.TRUE)) return new Expr.Literal(true);
     if (this.match(TOKEN_ENUM.NIL)) return new Expr.Literal("nil");

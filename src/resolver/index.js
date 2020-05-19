@@ -4,6 +4,7 @@ class Resolver {
   constructor(interpreter) {
     this.interpreter = interpreter;
     this.scopes = [{}];
+    this.enterClass = false;
   }
 
   get scopePeek() {
@@ -80,6 +81,84 @@ class Resolver {
     }
 
     this.resolveLocal(expr, expr.name);
+    return null;
+  }
+
+  evaluateClass(stmt) {
+    const previousEnterClass = this.enterClass;
+    this.enterClass = true;
+
+    this.declare(stmt.name);
+    this.define(stmt.name);
+
+    if (
+      stmt.superclass !== null &&
+      stmt.name.lexeme === stmt.superclass.name.lexeme
+    ) {
+      throw new LoxError(
+        stmt.superclass.name.line,
+        stmt.superclass.name.lexeme,
+        `A class cannot inherit from itself.`
+      );
+    }
+
+    if (stmt.superclass) {
+      this.beginScope();
+      this.scopePeek["super"] = true;
+      this.resolve(stmt.superclass);
+    }
+
+    this.beginScope();
+
+    this.scopePeek["this"] = true;
+
+    stmt.methods.forEach((method) => {
+      this.evaluateFunctionStmt(method);
+    });
+
+    this.endScope();
+
+    if (stmt.superclass) {
+      this.endScope();
+    }
+
+    this.enterClass = previousEnterClass;
+    return null;
+  }
+
+  evaluateSuper(expr) {
+    if (this.enterClass === false) {
+      throw new LoxError(
+        stmt.keyword.line,
+        stmt.keyword.lexeme,
+        "Cannot use 'super' outside of class"
+      );
+    }
+    this.resolveLocal(expr, expr.keyword);
+    return null;
+  }
+
+  evaluateThis(expr) {
+    if (this.enterClass === false) {
+      throw new LoxError(
+        stmt.keyword.line,
+        stmt.keyword.lexeme,
+        "Cannot use 'this' outside of class."
+      );
+    }
+
+    this.resolveLocal(expr, expr.keyword);
+    return null;
+  }
+
+  evaluateGet(expr) {
+    this.resolve(expr.object);
+    return null;
+  }
+
+  evaluateSet(expr) {
+    this.resolve(expr.value);
+    this.resolve(expr.object);
     return null;
   }
 

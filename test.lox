@@ -1,11 +1,17 @@
-fun hello(){
-  var a = 1;
-  fun test() {
-    print a;
+class Test {
+  init() {
+    this.a = 1;
+    this.b = 2;
   }
-  return test;
+
+  hello() {
+    print "this.a + this.b";
+  }
 }
 
-var a=2;
-var c=hello();
-c();
+class B < Test {
+
+}
+
+var test = B();
+test.hello();

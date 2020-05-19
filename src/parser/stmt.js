@@ -85,6 +85,18 @@ class Return {
   }
 }
 
+class Class {
+  constructor(name, methods, superclass) {
+    this.name = name;
+    this.methods = methods;
+    this.superclass = superclass;
+  }
+
+  evaluate(interpreter) {
+    return interpreter.evaluateClass(this);
+  }
+}
+
 module.exports = {
   Print,
   Expression,
@@ -94,4 +106,5 @@ module.exports = {
   While,
   FunctionStmt,
   Return,
+  Class,
 };

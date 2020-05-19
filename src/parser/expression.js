@@ -110,11 +110,59 @@ class Call {
   }
 }
 
+class Get {
+  constructor(object, name) {
+    this.object = object;
+    this.name = name;
+  }
+
+  evaluate(interpreter) {
+    return interpreter.evaluateGet(this);
+  }
+}
+
+class SetExpr {
+  constructor(object, name, value) {
+    this.object = object;
+    this.name = name;
+    this.value = value;
+  }
+
+  evaluate(interpreter) {
+    return interpreter.evaluateSet(this);
+  }
+}
+
+class This {
+  constructor(keyword) {
+    this.keyword = keyword;
+  }
+
+  evaluate(interpreter) {
+    return interpreter.evaluateThis(this);
+  }
+}
+
+class Super {
+  constructor(keyword, method) {
+    this.keyword = keyword;
+    this.method = method;
+  }
+
+  evaluate(interpreter) {
+    return interpreter.evaluateSuper(this);
+  }
+}
+
 function parenthesize(fn, ...params) {
   return `(${fn} ${params.join(" ")})`;
 }
 
 module.exports = {
+  Super,
+  This,
+  Get,
+  SetExpr,
   Unary,
   Binary,
   Literal,
